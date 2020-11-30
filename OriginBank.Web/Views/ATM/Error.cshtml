@@ -1,0 +1,12 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="row">
+    <div class="col-md-4 margin-top-20"></div>
+    <div class="col-md-4 margin-top-20">
+        <h1 class="text-danger">@Model.ErrorMessage</h1>
+        <button class="col-9 btn btn-primary margin-top-20" onclick="goBack()">Atrás</button>
+    </div>
+</div>
