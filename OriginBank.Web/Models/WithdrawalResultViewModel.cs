@@ -23,20 +23,5 @@ namespace OriginBank.Web.Models
         [DataType(DataType.Currency)]
         [Display(Name = "Remaining balance")]
         public decimal RemainingBalance { get; set; }
-
-        //public override bool Equals(object obj)
-        //{
-        //    var model = obj as WithdrawalResultViewModel;
-        //    return model != null &&
-        //           Number == model.Number &&
-        //           CurrentTime == model.CurrentTime &&
-        //           WithdrawalAmount == model.WithdrawalAmount &&
-        //           RemainingBalance == model.RemainingBalance;
-        //}
-
-        //public override int GetHashCode()
-        //{
-        //    return HashCode.Combine(Number, CurrentTime, WithdrawalAmount, RemainingBalance);
-        //}
     }
 }

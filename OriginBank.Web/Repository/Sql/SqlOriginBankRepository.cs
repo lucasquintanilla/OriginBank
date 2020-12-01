@@ -8,10 +8,6 @@ using System.Threading.Tasks;
 
 namespace OriginBank.Web.Repository.Sql
 {
-    //public class SqlOriginBankRepository
-    //{
-    //}
-
     public class SqlOriginBankRepository : IOriginBankRepository
     {
         private readonly DbContextOptions<OriginBankContext> _dbOptions;

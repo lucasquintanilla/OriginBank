@@ -17,13 +17,13 @@ namespace OriginBank.Web.Controllers
     {
         private ICardRepository _repository;
         private ITerminalSessionManager _sessionManager;
-        private ATMService _terminalService;
+        private ATMService _atmService;
 
-        public ATMController(ICardRepository repository, ITerminalSessionManager sessionManager, ATMService terminalService)
+        public ATMController(ICardRepository repository, ITerminalSessionManager sessionManager, ATMService atmService)
         {
             _repository = repository;
             _sessionManager = sessionManager;
-            _terminalService = terminalService;
+            _atmService = atmService;
         }
 
         public IActionResult Index()
@@ -50,7 +50,7 @@ namespace OriginBank.Web.Controllers
 
             if (card.IsBlocked)
             {
-                throw new InvalidOperationException("Card is blocked");
+                return RedirectToAction(nameof(CardBlocked));
             }
 
             _sessionManager.SetSessionCardId(HttpContext, card.Id);
@@ -58,16 +58,22 @@ namespace OriginBank.Web.Controllers
             return RedirectToAction(nameof(Pin));
         }
 
-        [TerminalIdFilterAttribute]
-        public IActionResult Pin()
+        [TerminalIdFilter]
+        public IActionResult Pin(bool retry = false)
         {
             _sessionManager.Unauthorize(HttpContext);
+
+            if (retry)
+            {
+                ViewBag.Message = "Invalid PIN";
+            }           
+
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [TerminalIdFilterAttribute]
+        [TerminalIdFilter]
         public async Task<IActionResult> Pin(int pin)
         {
             var pinAttempts =_sessionManager.GetPinAttempts(HttpContext);
@@ -80,11 +86,11 @@ namespace OriginBank.Web.Controllers
             if (pinAttempts >= maxAttempts)
             {
                 //Bloquear tarjeta
-                var card = await _terminalService.BlockCardAsync(cardId);
-                throw new InvalidOperationException("Card blocked");
+                var card = await _atmService.BlockCardAsync(cardId);
+                return RedirectToAction(nameof(CardBlocked));
             }  
 
-            bool isValid = await _terminalService.IsValidCardCombinationAsync(cardId, pin);
+            bool isValid = await _atmService.IsValidCardCombinationAsync(cardId, pin);
 
             if (isValid)
             {
@@ -94,27 +100,28 @@ namespace OriginBank.Web.Controllers
 
             _sessionManager.SetPinAttempts(HttpContext, ++pinAttempts);
 
-            return RedirectToAction(nameof(Pin));
+            //return RedirectToAction(nameof(Pin));
+            return RedirectToAction(nameof(Pin), new { @retry = true });
         }
 
-        [TerminalAuthorizationFilterAttribute]
-        [TerminalIdFilterAttribute]
+        [TerminalAuthorizationFilter]
+        [TerminalIdFilter]
         public IActionResult Menu()
         {
             return View();
         }
 
-        [TerminalAuthorizationFilterAttribute]
-        [TerminalIdFilterAttribute]
+        [TerminalAuthorizationFilter]
+        [TerminalIdFilter]
         public async Task<IActionResult> Balance()
         {
             int cardId = _sessionManager.GetSessionCardId(HttpContext).Value;
-            var result = await _terminalService.AddOperationAsync(cardId);
+            var result = await _atmService.AddOperationAsync(cardId);
             return View(result);
         }
 
-        [TerminalAuthorizationFilterAttribute]
-        [TerminalIdFilterAttribute]
+        [TerminalAuthorizationFilter]
+        [TerminalIdFilter]
         public IActionResult Withdraw()
         {
             return View();
@@ -122,32 +129,44 @@ namespace OriginBank.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [TerminalAuthorizationFilterAttribute]
-        [TerminalIdFilterAttribute]
+        [TerminalAuthorizationFilter]
+        [TerminalIdFilter]
         public async Task<IActionResult> Withdraw(decimal withdrawalAmount)
         {
             int cardId = _sessionManager.GetSessionCardId(HttpContext).Value;
-            var result = await _terminalService.WithdrawByIdAsync(cardId, withdrawalAmount);
+            var result = await _atmService.WithdrawByIdAsync(cardId, withdrawalAmount);
             return RedirectToAction(nameof(WithdrawalResult), result);
         }
 
-        [TerminalAuthorizationFilterAttribute]
-        [TerminalIdFilterAttribute]
+        [TerminalAuthorizationFilter]
+        [TerminalIdFilter]
         public IActionResult WithdrawalResult(WithdrawalResultViewModel viewModel)
         {
             return View(viewModel);
         }
 
-        [TerminalIdFilterAttribute]
+        public IActionResult CardBlocked()
+        {
+            return View();
+        }
+
+        public IActionResult SessionExpired()
+        {
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             var errorView = new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier };
             var exceptionHandlerPathFeature =
                 HttpContext.Features.Get<IExceptionHandlerPathFeature>();
-            errorView.ErrorMessage = exceptionHandlerPathFeature?.Error.Message;
 
-            Debug.WriteLine("Path " + exceptionHandlerPathFeature.Path);
+            Debug.WriteLine(exceptionHandlerPathFeature?.Error.Message);
+
+            errorView.ErrorMessage = "Terminal fuera de servicio";
+
+            //Debug.WriteLine("Path " + exceptionHandlerPathFeature.Path);
 
             return View(errorView);
         }

@@ -35,7 +35,7 @@ namespace OriginBank.Repository.Sql
 
             if (null == current)
             {
-                throw new Exception("Card id Not found");
+                throw new Exception("Card id not found");
             }
             else
             {

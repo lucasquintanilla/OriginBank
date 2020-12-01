@@ -9,5 +9,7 @@ namespace OriginBank.Web.Models
         public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 
         public string ErrorMessage { get; set; }
+
+        public bool ShowErrorMessage => !string.IsNullOrEmpty(ErrorMessage);
     }
 }

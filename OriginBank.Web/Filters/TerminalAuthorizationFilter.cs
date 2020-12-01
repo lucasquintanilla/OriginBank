@@ -2,25 +2,21 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 
 namespace OriginBank.Web.Filters
 {
-    public class TerminalIdFilterAttribute : ActionFilterAttribute
+    public class TerminalAuthorizationFilter : ActionFilterAttribute
     {
         private readonly ITerminalSessionManager _sessionManager = new BasicTerminalSessionManager();
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            if (!_sessionManager.GetSessionCardId(context.HttpContext).HasValue)
+            if (!_sessionManager.IsAuthorized(context.HttpContext))
             {
-                //throw new InvalidOperationException("Can't access this area with no valid card selected");
+                //throw new InvalidOperationException("Can't access this area without providing a valid number-pin combination");
 
-                //context.Result = new RedirectToRouteResult(new RouteValueDictionary())
-
-                context.Result = new RedirectResult("Index");
+                context.Result = new RedirectResult("SessionExpired");
             }
-
             base.OnActionExecuting(context);
         }
     }
