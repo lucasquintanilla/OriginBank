@@ -10,51 +10,51 @@ namespace OriginBank.Web.Services
 {
     public class ATMService
     {
-        private ICardRepository _creditCardRepository;
+        private ICardRepository _cardRepository;
         private IOperationRepository _operationRepository;
 
-        public ATMService(ICardRepository creditCardRepository, IOperationRepository operationRepository)
+        public ATMService(ICardRepository CardRepository, IOperationRepository operationRepository)
         {
-            _creditCardRepository = creditCardRepository;
+            _cardRepository = CardRepository;
             _operationRepository = operationRepository;
         }
 
         public async Task<int> GetCardIdByNumberAsync(string cardNumber)
         {
-            var card = await _creditCardRepository.GetAsync(cardNumber);
+            var card = await _cardRepository.GetAsync(cardNumber);
             
             if (card == null)
             {
-                throw new ArgumentException("Card with this number doesn't exist");
+                throw new InvalidOperationException("Card with this number doesn't exist");
             }
 
             if (card.IsBlocked)
             {
-                throw new InvalidOperationException("Card is invalid");
+                throw new InvalidOperationException("Card Blocked");
             }
 
             return card.Id;
         }
 
-        public async Task<Card> BlockCard(int id)
+        public async Task<Card> BlockCardAsync(int cardId)
         {
-            var currentCard = await _creditCardRepository.GetAsync(id);
+            var currentCard = await _cardRepository.GetAsync(cardId);
             currentCard.IsBlocked = true;
 
-            var card = await _creditCardRepository.EditAsync(currentCard);
+            var card = await _cardRepository.EditAsync(currentCard);
 
             return card;
         }
 
-        public async Task<Operation> AddOperation(int cardId)
+        public async Task<Operation> AddOperationAsync(int cardId)
         {
             var operation = await _operationRepository.AddAsync(new Operation() { CardId = cardId, Timestamp = DateTime.Now});           
             return operation;
         }
 
-        public async Task<bool> IsValidCardCombinationAsync(int id, int pin)
+        public async Task<bool> IsValidCardCombinationAsync(int cardId, int pin)
         {
-            var card = await _creditCardRepository.GetAsync(id);
+            var card = await _cardRepository.GetAsync(cardId);
 
             if (card.Pin == pin)
             {
@@ -64,9 +64,9 @@ namespace OriginBank.Web.Services
             return false;
         }
 
-        public async Task<WithdrawalResultViewModel> WithdrawByIdAsync(int id, decimal amount)
+        public async Task<WithdrawalResultViewModel> WithdrawByIdAsync(int cardId, decimal amount)
         {
-            var card = await _creditCardRepository.GetAsync(id);
+            var card = await _cardRepository.GetAsync(cardId);
             
             if (card.Balance < amount)
             {
@@ -78,7 +78,7 @@ namespace OriginBank.Web.Services
             }
 
             card.Balance -= amount;
-            await _creditCardRepository.EditAsync(card);
+            await _cardRepository.EditAsync(card);
             await _operationRepository.AddAsync(new Operation { CardId = card.Id, OperationCode = 1, Timestamp = DateTime.Now, WithdrawalAmount = amount });
             return new WithdrawalResultViewModel { Number = card.Number, RemainingBalance = card.Balance, WithdrawalAmount = amount };
         }

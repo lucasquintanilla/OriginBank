@@ -35,6 +35,7 @@ namespace OriginBank.Web
 
             var db = new OriginBankContext(new DbContextOptionsBuilder<OriginBankContext>()
                 .UseSqlServer(Configuration.GetConnectionString("OriginBankContext")).Options);
+
             services.AddScoped<ICardRepository, SqlCardRepository>(_ => new SqlCardRepository(db));
             services.AddScoped<IOperationRepository, SqlOperationRepository>(_ => new SqlOperationRepository(db));
             services.AddScoped<ATMService>();

@@ -58,6 +58,7 @@ namespace OriginBank.Web.Controllers
             return RedirectToAction(nameof(Pin));
         }
 
+        [TerminalIdFilterAttribute]
         public IActionResult Pin()
         {
             _sessionManager.Unauthorize(HttpContext);
@@ -66,7 +67,7 @@ namespace OriginBank.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [TerminalIdFilter]
+        [TerminalIdFilterAttribute]
         public async Task<IActionResult> Pin(int pin)
         {
             var pinAttempts =_sessionManager.GetPinAttempts(HttpContext);
@@ -79,7 +80,7 @@ namespace OriginBank.Web.Controllers
             if (pinAttempts >= maxAttempts)
             {
                 //Bloquear tarjeta
-                var card = await _terminalService.BlockCard(cardId);
+                var card = await _terminalService.BlockCardAsync(cardId);
                 throw new InvalidOperationException("Card blocked");
             }  
 
@@ -96,17 +97,24 @@ namespace OriginBank.Web.Controllers
             return RedirectToAction(nameof(Pin));
         }
 
+        [TerminalAuthorizationFilterAttribute]
+        [TerminalIdFilterAttribute]
         public IActionResult Menu()
         {
             return View();
         }
 
+        [TerminalAuthorizationFilterAttribute]
+        [TerminalIdFilterAttribute]
         public async Task<IActionResult> Balance()
         {
             int cardId = _sessionManager.GetSessionCardId(HttpContext).Value;
-            var result = await _terminalService.AddOperation(cardId);
+            var result = await _terminalService.AddOperationAsync(cardId);
             return View(result);
         }
+
+        [TerminalAuthorizationFilterAttribute]
+        [TerminalIdFilterAttribute]
         public IActionResult Withdraw()
         {
             return View();
@@ -114,6 +122,8 @@ namespace OriginBank.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [TerminalAuthorizationFilterAttribute]
+        [TerminalIdFilterAttribute]
         public async Task<IActionResult> Withdraw(decimal withdrawalAmount)
         {
             int cardId = _sessionManager.GetSessionCardId(HttpContext).Value;
@@ -121,11 +131,14 @@ namespace OriginBank.Web.Controllers
             return RedirectToAction(nameof(WithdrawalResult), result);
         }
 
+        [TerminalAuthorizationFilterAttribute]
+        [TerminalIdFilterAttribute]
         public IActionResult WithdrawalResult(WithdrawalResultViewModel viewModel)
         {
             return View(viewModel);
         }
 
+        [TerminalIdFilterAttribute]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
