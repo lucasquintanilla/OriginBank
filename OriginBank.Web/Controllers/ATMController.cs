@@ -164,10 +164,13 @@ namespace OriginBank.Web.Controllers
 
             Debug.WriteLine(exceptionHandlerPathFeature?.Error.Message);
 
+            if (exceptionHandlerPathFeature?.Error is InvalidOperationException)
+            {
+                errorView.ErrorMessage = exceptionHandlerPathFeature?.Error.Message;
+                return View(errorView);
+            }
+
             errorView.ErrorMessage = "Terminal fuera de servicio";
-
-            //Debug.WriteLine("Path " + exceptionHandlerPathFeature.Path);
-
             return View(errorView);
         }
     }

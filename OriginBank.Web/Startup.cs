@@ -13,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using OriginBank.Repository;
 using OriginBank.Web.Utilities;
 using OriginBank.Web.Services;
-using OriginBank.Web.Repository.Sql;
 
 namespace OriginBank.Web
 {

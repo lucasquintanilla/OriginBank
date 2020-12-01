@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace OriginBank.Web.Repository.Sql
+namespace OriginBank.Repository.Sql
 {
     public class SqlOperationRepository : IOperationRepository
     {
